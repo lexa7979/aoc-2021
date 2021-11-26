@@ -9,7 +9,22 @@ function inputDataLinesIntegers(filename = "input.txt") {
     .map((x) => parseInt(x));
 }
 
+// const Global = {
+//   sortedPrimes: [2, 3, 5, 7],
+//   max: 10,
+// };
+
 function _isPrime(x) {
+  // if (x > Global.max) {
+  //   for (let testNumber = Global.max; testNumber <= x; testNumber++) {
+  //     if (Global.sortedPrimes.every((prime) => testNumber % prime)) {
+  //       Global.sortedPrimes.push(testNumber);
+  //     }
+  //   }
+  //   Global.max = x;
+  // }
+  // return Global.sortedPrimes.includes(x);
+
   if (x < 3) {
     return x === 2;
   }
