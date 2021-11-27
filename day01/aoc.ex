@@ -1,31 +1,34 @@
 defmodule AOC do
-  def start() do
-    if System.get_env("part") == "part1", do: getSolutionPart1(), else: getSolutionPart2()
+  def start do
+    IO.puts "Elixir"
+    if System.get_env("part") == "part1" do
+      readlines() |> getSolutionPart1() |> IO.puts
+    else
+      readlines() |> getSolutionPart2() |> IO.puts
+    end
   end
 
-  defp getSolutionPart1() do
-    readlines()
-      |> Enum.with_index
+  def getSolutionPart1(list) do
+    Enum.with_index(list)
       |> Enum.filter(fn {n, _index} -> prime?(n) end)
       |> Enum.map(fn {n, index} -> n * index end)
       |> Enum.sum
   end
 
-  defp getSolutionPart2() do
-    readlines()
-      |> Enum.with_index
-      |> Enum.filter(fn {n, _index} -> !prime?(n) end)
+  def getSolutionPart2(list) do
+    Enum.with_index(list)
+      |> Enum.reject(fn {n, _index} -> prime?(n) end)
       |> Enum.map(fn {n, index} -> if rem(index, 2) == 0, do: n, else: -n end)
       |> Enum.sum
   end
 
-  defp readlines() do
+  def readlines do
     File.read!("./input.txt")
       |> String.split
       |> Enum.map(&String.to_integer/1)
   end
 
-  defp prime?(x) do
+  def prime?(x) do
     if x < 2 do
       false
     else
@@ -34,6 +37,3 @@ defmodule AOC do
     end
   end
 end
-
-IO.puts "Elixir"
-IO.puts AOC.start
