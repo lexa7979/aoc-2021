@@ -1,5 +1,39 @@
 const fs = require("fs");
 
+if (process.env.NODE_ENV !== "test") {
+  console.log("Javascript");
+  const part = process.env.part || "part1";
+  if (part === "part1") {
+    console.log(getSolutionPart1());
+  } else {
+    console.log(getSolutionPart2());
+  }
+}
+
+function getSolutionPart1() {
+  return getNumberOfIncreases(inputDataLinesIntegers());
+}
+
+function getNumberOfIncreases(list) {
+  const _findIncreases = (number, index, array) =>
+    array[index - 1] != null && array[index - 1] < number;
+  return list.filter(_findIncreases).length;
+}
+
+function getSolutionPart2() {
+  return getNumberOfIncreasesWithSumOfThreeValues(inputDataLinesIntegers());
+}
+
+function getNumberOfIncreasesWithSumOfThreeValues(list) {
+  const _getSumOfThreeValues = (number, index, array) =>
+    array[index - 2] == null
+      ? null
+      : array[index - 2] + array[index - 1] + number;
+  const _findIncreases = (number, index, array) =>
+    array[index - 1] != null && array[index - 1] < number;
+  return list.map(_getSumOfThreeValues).filter(_findIncreases).length;
+}
+
 function inputDataLinesIntegers(filename = "input.txt") {
   return fs
     .readFileSync(filename)
@@ -9,71 +43,9 @@ function inputDataLinesIntegers(filename = "input.txt") {
     .map((x) => parseInt(x));
 }
 
-// const Global = {
-//   sortedPrimes: [2, 3, 5, 7],
-//   max: 10,
-// };
-
-function _isPrime(x) {
-  // if (x > Global.max) {
-  //   for (let testNumber = Global.max; testNumber <= x; testNumber++) {
-  //     if (Global.sortedPrimes.every((prime) => testNumber % prime)) {
-  //       Global.sortedPrimes.push(testNumber);
-  //     }
-  //   }
-  //   Global.max = x;
-  // }
-  // return Global.sortedPrimes.includes(x);
-
-  if (x < 3) {
-    return x === 2;
-  }
-  const testStop = Math.floor(Math.sqrt(x));
-  for (let i = 2; i <= testStop; i++) {
-    if (x % i === 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function _sumOfProductsPrimesWithIndex(list) {
-  return list
-    .map((number, index) => ({ number, index }))
-    .filter(({ number }) => _isPrime(number))
-    .map(({ number, index }) => number * index)
-    .reduce((acc, curr) => acc + curr, 0);
-}
-
-function _sumOfNonPrimesWithAlternatingSigns(list) {
-  return list
-    .map((number, index) => ({ number, index }))
-    .filter(({ number }) => !_isPrime(number))
-    .map(({ number, index }) => (index % 2 === 0 ? number : -number))
-    .reduce((acc, curr) => acc + curr, 0);
-}
-
-function getSolutionPart1() {
-  return _sumOfProductsPrimesWithIndex(inputDataLinesIntegers());
-}
-
-function getSolutionPart2() {
-  return _sumOfNonPrimesWithAlternatingSigns(inputDataLinesIntegers());
-}
-
-console.log("Javascript");
-const part = process.env.part || "part1";
-
-if (part === "part1") {
-  console.log(getSolutionPart1());
-} else {
-  console.log(getSolutionPart2());
-}
-
 module.exports = {
-  _isPrime,
-  _sumOfProductsPrimesWithIndex,
-  _sumOfNonPrimesWithAlternatingSigns,
+  getNumberOfIncreases,
+  getNumberOfIncreasesWithSumOfThreeValues,
   getSolutionPart1,
   getSolutionPart2,
   inputDataLinesIntegers,
