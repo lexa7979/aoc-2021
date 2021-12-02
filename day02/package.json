@@ -7,8 +7,8 @@
     "test": "jest",
     "test:w": "jest --watchAll",
     "test:wn": "jest --watchAll --notify",
-    "docker:1": "docker build -t aoc2021-day01-js . && docker run -e part=part1 aoc2021-day01-js",
-    "docker:2": "docker build -t aoc2021-day01-js . && docker run -e part=part2 aoc2021-day01-js"
+    "docker:1": "docker build -t aoc2021-day02-js . && docker run -e part=part1 aoc2021-day02-js",
+    "docker:2": "docker build -t aoc2021-day02-js . && docker run -e part=part2 aoc2021-day02-js"
   },
   "devDependencies": {
     "jest": "^27.3.1",

@@ -1,0 +1,13 @@
+{
+  "name": "aoc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "elixirc --ignore-module-conflict aoc.ex && elixir -e AOC.start",
+    "test": "elixirc --ignore-module-conflict aoc.ex && elixir aoc.test.exs",
+    "docker:1": "docker build -t aoc2021-day02-elixir . && docker run -e part=part1 aoc2021-day02-elixir",
+    "docker:2": "docker build -t aoc2021-day02-elixir . && docker run -e part=part2 aoc2021-day02-elixir"
+  },
+  "dependencies": {}
+}
