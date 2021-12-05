@@ -1,4 +1,5 @@
 const Import = require("./index");
+const Helpers = require("./helpers");
 
 const testData = [
   "0,9 -> 5,9",
@@ -13,44 +14,17 @@ const testData = [
   "5,5 -> 8,2",
 ];
 
+const lineSegment1 = [0, 1, 2, 3, 4, 5].map(i => [i, 9]);
+const lineSegment2 = [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => [8 - i, i]);
+const lineSegment3 = [9, 8, 7, 6, 5, 4, 3].map(i => [i, 4]);
+const lineSegment4 = [2, 1].map(i => [2, i]);
+
 describe("parseLineSegments", () => {
   const { parseLineSegments } = Import;
   it("- when used with test-data - works as expected", () => {
-    const lineSegment1 = [
-      [0, 9],
-      [1, 9],
-      [2, 9],
-      [3, 9],
-      [4, 9],
-      [5, 9],
-    ];
-    const lineSegment2 = [
-      [8, 0],
-      [7, 1],
-      [6, 2],
-      [5, 3],
-      [4, 4],
-      [3, 5],
-      [2, 6],
-      [1, 7],
-      [0, 8],
-    ];
-    const lineSegment3 = [
-      [9, 4],
-      [8, 4],
-      [7, 4],
-      [6, 4],
-      [5, 4],
-      [4, 4],
-      [3, 4],
-    ];
-    const lineSegment4 = [
-      [2, 2],
-      [2, 1],
-    ];
-
-    expect(parseLineSegments(testData.slice(0, 4), true)).toEqual([lineSegment1, lineSegment3, lineSegment4]);
-    expect(parseLineSegments(testData.slice(0, 4), false)).toEqual([
+    const lines = Helpers.parseInputData(testData);
+    expect(parseLineSegments(lines.slice(0, 4), true)).toEqual([lineSegment1, lineSegment3, lineSegment4]);
+    expect(parseLineSegments(lines.slice(0, 4), false)).toEqual([
       lineSegment1,
       lineSegment2,
       lineSegment3,
@@ -61,9 +35,15 @@ describe("parseLineSegments", () => {
 
 describe("countCoordinatesOfMeetingLines", () => {
   const { countCoordinatesOfMeetingLines, parseLineSegments } = Import;
-  it("- when used with test-data - works as expected", () => {
-    const setup = parseLineSegments(testData);
+  it("- when used with test-data and ignoring diagonals - works as expected", () => {
+    const lines = Helpers.parseInputData(testData);
+    const setup = parseLineSegments(lines, true);
     expect(countCoordinatesOfMeetingLines(setup)).toBe(5);
+  });
+  it("- when used with test-data and including diagonals - works as expected", () => {
+    const lines = Helpers.parseInputData(testData);
+    const setup = parseLineSegments(lines, false);
+    expect(countCoordinatesOfMeetingLines(setup)).toBe(12);
   });
 });
 

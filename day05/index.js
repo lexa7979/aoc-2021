@@ -1,4 +1,9 @@
-const fs = require("fs");
+const Helpers = require("./helpers");
+
+Helpers.setParseOptions({
+  transformMatch: /^(\d+),(\d+) -> (\d+),(\d+)$/,
+  asInteger: [1, 2, 3, 4],
+});
 
 if (process.env.NODE_ENV !== "test") {
   console.log("Javascript");
@@ -11,64 +16,48 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 function getSolutionPart1() {
-  const setup = parseLineSegments(getInputDataLines(), true);
+  const setup = parseLineSegments(Helpers.parseInputData(), true);
   return countCoordinatesOfMeetingLines(setup);
 }
 
 function getSolutionPart2() {
-  const setup = parseLineSegments(getInputDataLines(), false);
+  const setup = parseLineSegments(Helpers.parseInputData(), false);
   return countCoordinatesOfMeetingLines(setup);
 }
 
-function parseLineSegments(input, skipDiagonals = true) {
+function parseLineSegments(lines, skipDiagonals = true) {
   const lineSegments = [];
-  input.forEach(line => {
-    const match = /^(\d+),(\d+) -> (\d+),(\d+)$/.exec(line);
-    if (!match) {
-      throw new Error(`Failed to parse line "${line}".`);
+  for (let i = 0; i < lines.length; i++) {
+    const [x1, y1, x2, y2] = lines[i];
+    if (!skipDiagonals || x1 == x2 || y1 == y2) {
+      const xRange = Helpers.getArrayRange(x1, x2);
+      const yRange = Helpers.getArrayRange(y1, y2);
+      if (xRange.length >= yRange.length) {
+        lineSegments.push(xRange.map((x, index) => [x, yRange[index % yRange.length]]));
+      } else {
+        lineSegments.push(yRange.map((y, index) => [xRange[index % xRange.length], y]));
+      }
     }
-    const [_, x1, y1, x2, y2] = match.map(i => parseInt(i, 10));
-    if (skipDiagonals && x1 != x2 && y1 != y2) {
-      return;
-    }
-    const xSteps = x1 < x2 ? 1 : x1 > x2 ? -1 : 0;
-    const ySteps = y1 < y2 ? 1 : y1 > y2 ? -1 : 0;
-    const maxSteps = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
-    lineSegments.push(
-      Array(maxSteps + 1)
-        .fill()
-        .map((_, index) => [x1 + index * xSteps, y1 + index * ySteps])
-    );
-  });
+  }
   return lineSegments;
 }
 
 function countCoordinatesOfMeetingLines(lineSegments) {
   const linesAtCoordinate = {};
-  lineSegments.forEach(line =>
-    line.forEach(coordinate => {
+  for (let i = 0; i < lineSegments.length; i++) {
+    const line = lineSegments[i];
+    for (let k = 0; k < line.length; k++) {
+      const coordinate = line[k];
       const key = coordinate.join(",");
       linesAtCoordinate[key] = 1 + (linesAtCoordinate[key] || 0);
-    })
-  );
-  let meetingCoordinates = 0;
-  Object.values(linesAtCoordinate).forEach(value => {
-    if (value > 1) {
-      meetingCoordinates++;
     }
-  });
-  return meetingCoordinates;
-}
-
-function getInputDataLines(inputBag) {
-  const { asInteger = false } = inputBag || {};
-  const lines = fs.readFileSync("input.txt").toString().trim().split("\n");
-  return asInteger ? lines.map(x => parseInt(x, 10)) : lines;
+  }
+  return Object.values(linesAtCoordinate).filter(value => value > 1).length;
 }
 
 module.exports = {
-  parseLineSegments,
-  countCoordinatesOfMeetingLines,
   getSolutionPart1,
   getSolutionPart2,
+  parseLineSegments,
+  countCoordinatesOfMeetingLines,
 };
