@@ -41,12 +41,23 @@ function getLeastFuelNeededToReachSamePosition(setup, variant) {
     maxPosition = Math.max(maxPosition, setup[i]);
   }
 
-  let minFuel = getNeededFuelForAllToReachPosition(setup, minPosition, variant);
-  for (let position = minPosition + 1; position <= maxPosition; position++) {
-    minFuel = Math.min(minFuel, getNeededFuelForAllToReachPosition(setup, position, variant));
+  while (minPosition < maxPosition) {
+    const position = Math.floor((maxPosition + minPosition) / 2);
+    const prev = getNeededFuelForAllToReachPosition(setup, position - 1, variant);
+    const curr = getNeededFuelForAllToReachPosition(setup, position, variant);
+    const next = getNeededFuelForAllToReachPosition(setup, position + 1, variant);
+    const min = Math.min(prev, curr, next);
+    if (min === curr) {
+      return curr;
+    }
+    if (min === prev) {
+      maxPosition = position;
+    } else {
+      minPosition = position;
+    }
   }
 
-  return minFuel;
+  return getNeededFuelForAllToReachPosition(setup, minPosition, variant);
 }
 
 function getNeededFuelForAllToReachPosition(setup, position, variant = 1) {
