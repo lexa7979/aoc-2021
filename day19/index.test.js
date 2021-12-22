@@ -310,6 +310,29 @@ const testSetup2 = {
   },
 };
 
+const testBestMappings2 = [
+  {
+    path: ["id0", "id1"],
+    rotationScanner2: ["-x", "+y", "-z"],
+    translation: [-68, 1246, 43],
+  },
+  {
+    path: ["id0", "id1", "id3"],
+    rotationScanner2: ["+x", "+y", "+z"],
+    translation: [-160, 1134, 23],
+  },
+  {
+    path: ["id0", "id1", "id4"],
+    rotationScanner2: ["+y", "-z", "-x"],
+    translation: [-88, -113, 1104],
+  },
+  {
+    path: ["id0", "id1", "id4", "id2"],
+    rotationScanner2: ["+y", "+x", "-z"],
+    translation: [-168, 1125, -72],
+  },
+];
+
 describe("parseLinesIntoSetup", () => {
   const { parseLinesIntoSetup } = Import;
   it("works as expected", () => {
@@ -506,26 +529,22 @@ describe("getBestMappingBetweenTwoScanners", () => {
   });
 });
 
+describe("getAllBestMappingsStartingAtInitialScanner", () => {
+  const { getAllBestMappingsStartingAtInitialScanner } = Import;
+  it("works as expected", () => {
+    expect(getAllBestMappingsStartingAtInitialScanner(testSetup2)).toEqual(testBestMappings2);
+  });
+});
+
 describe("getScannerBeaconsRelativeToInitialScanner", () => {
   const { getScannerBeaconsRelativeToInitialScanner } = Import;
   it("works as expected", () => {
-    const scannerMappings = [
-      {
-        scannerId1: "id0",
-        scannerId2: "id1",
-        rotationScanner2: ["-x", "+y", "-z"],
-        translation: [-68, 1246, 43],
-      },
-      {
-        scannerId1: "id1",
-        scannerId2: "id4",
-        rotationScanner2: ["+y", "-z", "-x"],
-        translation: [-88, -113, 1104],
-      },
-    ];
-
     expect(
-      getScannerBeaconsRelativeToInitialScanner({ setup: testSetup2, scannerId2: "id1", scannerMappings })
+      getScannerBeaconsRelativeToInitialScanner({
+        setup: testSetup2,
+        scannerId2: "id1",
+        allBestMappings: testBestMappings2,
+      })
     ).toEqual([
       [-618, -824, -621],
       [-537, -823, -458],
@@ -555,7 +574,11 @@ describe("getScannerBeaconsRelativeToInitialScanner", () => {
     ]);
 
     expect(
-      getScannerBeaconsRelativeToInitialScanner({ setup: testSetup2, scannerId2: "id4", scannerMappings })
+      getScannerBeaconsRelativeToInitialScanner({
+        setup: testSetup2,
+        scannerId2: "id4",
+        allBestMappings: testBestMappings2,
+      })
     ).toEqual([
       [-612, -1695, 1788],
       [534, -1912, 768],
@@ -586,204 +609,165 @@ describe("getScannerBeaconsRelativeToInitialScanner", () => {
     ]);
 
     expect(
-getScannerBeaconsRelativeToInitialScanner({ setup: testSetup2, scannerId2: "id2", scannerMappings })).
-toMatchInlineSnapshot(`undefined`);
-  });
-});
-
-describe.skip("getAllBestMappingsBetweenAnyTwoScanners", () => {
-  const { getAllBestMappingsBetweenAnyTwoScanners } = Import;
-  it("works as expected", () => {
-    expect(getAllBestMappingsBetweenAnyTwoScanners(testSetup2)).toEqual([
-      {
-        indexMapping: [
-          [0, 3],
-          [1, 8],
-          [3, 12],
-          [4, 1],
-          [5, 24],
-          [6, 18],
-          [7, 10],
-          [9, 0],
-          [12, 2],
-          [14, 5],
-          [19, 15],
-          [24, 19],
-        ],
-        rotationScanner2: ["-x", "+y", "-z"],
-        scannerId1: "id0",
-        scannerId2: "id1",
-        translation: [-68, 1246, 43],
-      },
-      {
-        indexMapping: [
-          [6, 2],
-          [7, 13],
-          [9, 20],
-          [11, 3],
-          [13, 6],
-          [14, 0],
-          [16, 11],
-          [17, 5],
-          [20, 17],
-          [21, 12],
-          [22, 21],
-          [23, 24],
-        ],
-        rotationScanner2: ["+x", "+y", "+z"],
-        scannerId1: "id1",
-        scannerId2: "id3",
-        translation: [-160, 1134, 23],
-      },
-      {
-        indexMapping: [
-          [2, 4],
-          [6, 11],
-          [8, 24],
-          [13, 1],
-          [15, 18],
-          [16, 15],
-          [18, 17],
-          [19, 5],
-          [21, 13],
-          [22, 12],
-          [23, 16],
-          [24, 3],
-        ],
-        rotationScanner2: ["+y", "-z", "-x"],
-        scannerId1: "id1",
-        scannerId2: "id4",
-        translation: [-88, -113, 1104],
-      },
-      {
-        indexMapping: [
-          [0, 14],
-          [1, 18],
-          [7, 23],
-          [8, 22],
-          [11, 11],
-          [12, 19],
-          [13, 6],
-          [16, 1],
-          [19, 5],
-          [20, 7],
-          [23, 13],
-          [25, 24],
-        ],
-        rotationScanner2: ["+y", "+x", "-z"],
-        scannerId1: "id2",
-        scannerId2: "id4",
-        translation: [-1125, 168, -72],
-      },
+      getScannerBeaconsRelativeToInitialScanner({
+        setup: testSetup2,
+        scannerId2: "id2",
+        allBestMappings: testBestMappings2,
+      })
+    ).toEqual([
+      [456, -540, 1869],
+      [423, -701, 434],
+      [1889, -1729, 1762],
+      [1749, -1800, 1813],
+      [1693, -557, 386],
+      [1135, -1161, 1235],
+      [1779, -442, 1789],
+      [605, -1665, 1952],
+      [496, -1584, 1900],
+      [1660, -552, 429],
+      [1780, -1548, 337],
+      [408, -1815, 803],
+      [527, -524, 1933],
+      [612, -1593, 1893],
+      [1776, -675, 371],
+      [1772, -405, 1572],
+      [534, -1912, 768],
+      [1243, -1093, 1063],
+      [1994, -1805, 1792],
+      [459, -707, 401],
+      [465, -695, 1988],
+      [1735, -437, 1738],
+      [1786, -1538, 337],
+      [432, -2009, 850],
+      [1847, -1591, 415],
+      [528, -643, 409],
     ]);
   });
 });
 
-describe.skip("extractUniqueBeaconsFromAllBestMappings", () => {
-  const { extractUniqueBeaconsFromAllBestMappings } = Import;
+describe("listAllScannerBeacons", () => {
+  const { listAllScannerBeacons } = Import;
   it("works as expected", () => {
-    const allBestMappings = Import.getAllBestMappingsBetweenAnyTwoScanners(testSetup2);
-    const result = extractUniqueBeaconsFromAllBestMappings(testSetup2, allBestMappings);
+    const result = listAllScannerBeacons({ setup: testSetup2, allBestMappings: testBestMappings2 });
     expect(result.length).toBe(79);
-    expect(result).toMatchInlineSnapshot();
-    // expect(result).toEqual([
-    //   ["id0-0", "id1-3"],
-    //   ["id0-1", "id1-8", "id4-24", "id2-25"],
-    //   ["id0-2"],
-    //   ["id0-3", "id1-12"],
-    //   ["id0-4", "id1-1"],
-    //   ["id0-5", "id1-24", "id4-3"],
-    //   ["id0-6", "id1-18", "id4-17"],
-    //   ["id0-7", "id1-10"],
-    //   ["id0-8"],
-    //   ["id0-9", "id1-0"],
-    //   ["id0-10"],
-    //   ["id0-11"],
-    //   ["id0-12", "id1-2", "id4-4"],
-    //   ["id0-13"],
-    //   ["id0-14", "id1-5"],
-    //   ["id0-15"],
-    //   ["id0-16"],
-    //   ["id0-17"],
-    //   ["id0-18"],
-    //   ["id0-19", "id1-15", "id4-18", "id2-1"],
-    //   ["id0-20"],
-    //   ["id0-21"],
-    //   ["id0-22"],
-    //   ["id0-23"],
-    //   ["id0-24", "id1-19", "id4-5", "id2-19"],
-    //   ["id1-4"],
-    //   ["id1-6", "id3-2", "id4-11", "id2-11"],
-    //   ["id1-7", "id3-13"],
-    //   ["id1-9", "id3-20"],
-    //   ["id1-11", "id3-3"],
-    //   ["id1-13", "id3-6", "id4-1", "id2-16"],
-    //   ["id1-14", "id3-0"],
-    //   ["id1-16", "id3-11", "id4-15"],
-    //   ["id1-17", "id3-5"],
-    //   ["id1-20", "id3-17"],
-    //   ["id1-21", "id3-12", "id4-13", "id2-23"],
-    //   ["id1-22", "id3-21", "id4-12"],
-    //   ["id1-23", "id3-24", "id4-16"],
-    //   ["id2-0", "id4-14"],
-    //   ["id2-2"],
-    //   ["id2-3"],
-    //   ["id2-4"],
-    //   ["id2-5"],
-    //   ["id2-6"],
-    //   ["id2-7", "id4-23"],
-    //   ["id2-8", "id4-22"],
-    //   ["id2-9"],
-    //   ["id2-10"],
-    //   ["id2-12", "id4-19"],
-    //   ["id2-13", "id4-6"],
-    //   ["id2-14"],
-    //   ["id2-15"],
-    //   ["id2-17"],
-    //   ["id2-18"],
-    //   ["id2-20", "id4-7"],
-    //   ["id2-21"],
-    //   ["id2-22"],
-    //   ["id2-24"],
-    //   ["id3-1"],
-    //   ["id3-4"],
-    //   ["id3-7"],
-    //   ["id3-8"],
-    //   ["id3-9"],
-    //   ["id3-10"],
-    //   ["id3-14"],
-    //   ["id3-15"],
-    //   ["id3-16"],
-    //   ["id3-18"],
-    //   ["id3-19"],
-    //   ["id3-22"],
-    //   ["id3-23"],
-    //   ["id4-0"],
-    //   ["id4-2"],
-    //   ["id4-8"],
-    //   ["id4-9"],
-    //   ["id4-10"],
-    //   ["id4-20"],
-    //   ["id4-21"],
-    //   ["id4-25"],
-    // ]);
+    expect(result).toEqual([
+      [-892, 524, 684],
+      [-876, 649, 763],
+      [-838, 591, 734],
+      [-789, 900, -551],
+      [-739, -1745, 668],
+      [-706, -3180, -659],
+      [-697, -3072, -689],
+      [-689, 845, -530],
+      [-687, -1600, 576],
+      [-661, -816, -575],
+      [-654, -3158, -753],
+      [-635, -1737, 486],
+      [-631, -672, 1502],
+      [-624, -1620, 1868],
+      [-620, -3212, 371],
+      [-618, -824, -621],
+      [-612, -1695, 1788],
+      [-601, -1648, -643],
+      [-584, 868, -557],
+      [-537, -823, -458],
+      [-532, -1715, 1894],
+      [-518, -1681, -600],
+      [-499, -1607, -770],
+      [-485, -357, 347],
+      [-470, -3283, 303],
+      [-456, -621, 1527],
+      [-447, -329, 318],
+      [-430, -3130, 366],
+      [-413, -627, 1469],
+      [-345, -311, 381],
+      [-36, -1284, 1171],
+      [-27, -1108, -65],
+      [7, -33, -71],
+      [12, -2351, -103],
+      [26, -1119, 1091],
+      [346, -2985, 342],
+      [366, -3059, 397],
+      [377, -2827, 367],
+      [390, -675, -793],
+      [396, -1931, -563],
+      [404, -588, -901],
+      [408, -1815, 803],
+      [423, -701, 434],
+      [432, -2009, 850],
+      [443, 580, 662],
+      [455, 729, 728],
+      [456, -540, 1869],
+      [459, -707, 401],
+      [465, -695, 1988],
+      [474, 580, 667],
+      [496, -1584, 1900],
+      [497, -1838, -617],
+      [527, -524, 1933],
+      [528, -643, 409],
+      [534, -1912, 768],
+      [544, -627, -890],
+      [553, 345, -567],
+      [564, 392, -477],
+      [568, -2007, -577],
+      [605, -1665, 1952],
+      [612, -1593, 1893],
+      [630, 319, -379],
+      [686, -3108, -505],
+      [776, -3184, -501],
+      [846, -3110, -434],
+      [1135, -1161, 1235],
+      [1243, -1093, 1063],
+      [1660, -552, 429],
+      [1693, -557, 386],
+      [1735, -437, 1738],
+      [1749, -1800, 1813],
+      [1772, -405, 1572],
+      [1776, -675, 371],
+      [1779, -442, 1789],
+      [1780, -1548, 337],
+      [1786, -1538, 337],
+      [1847, -1591, 415],
+      [1889, -1729, 1762],
+      [1994, -1805, 1792],
+    ]);
   });
 });
 
-describe.skip("getSolutionPart1", () => {
+describe("getLargestManhattenDistanceBetweenScanners", () => {
+  const { getLargestManhattenDistanceBetweenScanners } = Import;
+  it("works as expected", () => {
+    const result = getLargestManhattenDistanceBetweenScanners({
+      setup: testSetup2,
+      allBestMappings: testBestMappings2,
+    });
+    expect(result).toEqual({
+      relativeScannerPositions: [
+        { position: [0, 0, 0], scannerId: "id0" },
+        { position: [68, -1246, -43], scannerId: "id1" },
+        { position: [1105, -1205, 1229], scannerId: "id2" },
+        { position: [-92, -2380, -20], scannerId: "id3" },
+        { position: [-20, -1133, 1061], scannerId: "id4" },
+      ],
+      maxDistance: 3621,
+    });
+  });
+});
+
+describe("getSolutionPart1", () => {
   const { getSolutionPart1 } = Import;
   it("- when used with real data - works as expected", () => {
     const result = getSolutionPart1();
     expect(result).not.toBe(387);
     expect(result).not.toBe(573);
-    expect(result).toBe(79);
+    expect(result).toBe(378);
   });
 });
 
-describe.skip("getSolutionPart2", () => {
+describe("getSolutionPart2", () => {
   const { getSolutionPart2 } = Import;
   it("- when used with real data - works as expected", () => {
     const result = getSolutionPart2();
-    expect(result).toBe(4731);
+    expect(result).toBe(13148);
   });
 });
