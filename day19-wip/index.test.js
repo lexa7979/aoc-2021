@@ -14,6 +14,7 @@ const testData1 = [
 ];
 
 const testSetup1 = {
+  initialScannerId: "id0",
   beaconsByScannerId: {
     id0: [
       [-1, -1, 1],
@@ -167,6 +168,7 @@ const testData2 = [
 ];
 
 const testSetup2 = {
+  initialScannerId: "id0",
   beaconsByScannerId: {
     id0: [
       [404, -588, -901],
@@ -361,6 +363,16 @@ describe("applyRotationToBeacon", () => {
   });
 });
 
+describe("applyNegativeRotationToBeacon", () => {
+  const { applyNegativeRotationToBeacon } = Import;
+  it("works as expected", () => {
+    expect(applyNegativeRotationToBeacon([404, -588, -901], ["+x", "+y", "+z"])).toEqual([404, -588, -901]);
+    expect(applyNegativeRotationToBeacon([-404, 588, -901], ["-x", "-y", "+z"])).toEqual([404, -588, -901]);
+    expect(applyNegativeRotationToBeacon([-588, 404, -901], ["+y", "+x", "+z"])).toEqual([404, -588, -901]);
+    expect(applyNegativeRotationToBeacon([-901, -404, -588], ["+z", "-x", "+y"])).toEqual([404, -588, -901]);
+  });
+});
+
 describe("getTranslationFromOneBeaconToAnother", () => {
   const { getTranslationFromOneBeaconToAnother } = Import;
   it("works as expected", () => {
@@ -381,8 +393,8 @@ describe("applyTranslationToBeacon", () => {
   });
 });
 
-describe("getBeaconIndexMatchesWithGivenMappingBetweenTwoScanners", () => {
-  const { getBeaconIndexMatchesWithGivenMappingBetweenTwoScanners } = Import;
+describe("matchTwoBeaconSetsWithGivenTranslation", () => {
+  const { matchTwoBeaconSetsWithGivenTranslation } = Import;
   it("works as expected", () => {
     const setup = {
       beaconsByScannerId: {
@@ -403,21 +415,21 @@ describe("getBeaconIndexMatchesWithGivenMappingBetweenTwoScanners", () => {
       },
     };
 
-    const _testWithRotation = rotationScanner1 => {
-      const rotated = Import.applyRotationToBeacon(setup.beaconsByScannerId.id0[0], rotationScanner1);
-      const translation = Import.getTranslationFromOneBeaconToAnother(rotated, setup.beaconsByScannerId.id1[0]);
-      const optionsBag = { setup, scannerId1: "id0", scannerId2: "id1", rotationScanner1, translation };
-      return getBeaconIndexMatchesWithGivenMappingBetweenTwoScanners(optionsBag);
+    const allBeaconsSet1 = setup.beaconsByScannerId.id0;
+
+    const _testWithRotation = rotationScanner2 => {
+      const allBeaconsSet2 = setup.beaconsByScannerId.id1.map(beacon =>
+        Import.applyRotationToBeacon(beacon, rotationScanner2)
+      );
+      const translation = Import.getTranslationFromOneBeaconToAnother(allBeaconsSet1[0], allBeaconsSet2[0]);
+      const optionsBag = { allBeaconsSet1, allBeaconsSet2, translation };
+      return matchTwoBeaconSetsWithGivenTranslation(optionsBag);
     };
 
-    expect(_testWithRotation(["+x", "+y", "+z"])).toEqual([
-      [0, 0],
-      [1, 2],
-      [2, 1],
-    ]);
-    expect(
-      setup.beaconsByScannerId.id0.map(beacon => Import.applyRotationToBeacon(beacon, ["+y", "+x", "-z"]))
-    ).toEqual([
+    const rotation1 = ["+x", "+y", "+z"];
+    const rotation2 = ["+y", "+x", "-z"];
+
+    expect(setup.beaconsByScannerId.id0.map(beacon => Import.applyRotationToBeacon(beacon, rotation2))).toEqual([
       [2, 1, -3],
       [4, 3, -5],
       [5, 3, -4],
@@ -425,7 +437,13 @@ describe("getBeaconIndexMatchesWithGivenMappingBetweenTwoScanners", () => {
       [2, 3, -10],
     ]);
     expect(Import.getTranslationFromOneBeaconToAnother([2, 1, -3], [4, 8, 1])).toEqual([2, 7, 4]);
-    expect(_testWithRotation(["+y", "+x", "-z"])).toEqual([
+
+    expect(_testWithRotation(rotation1)).toEqual([
+      [0, 0],
+      [1, 2],
+      [2, 1],
+    ]);
+    expect(_testWithRotation(rotation2)).toEqual([
       [0, 0],
       [2, 3],
       [4, 4],
@@ -436,12 +454,13 @@ describe("getBeaconIndexMatchesWithGivenMappingBetweenTwoScanners", () => {
 describe("getBestMappingBetweenTwoScanners", () => {
   const { getBestMappingBetweenTwoScanners } = Import;
   it("works as expected", () => {
-    const result = getBestMappingBetweenTwoScanners({
-      setup: testSetup2,
-      scannerId1: "id0",
-      scannerId2: "id1",
-    });
-    expect(result).toEqual({
+    expect(
+      getBestMappingBetweenTwoScanners({
+        setup: testSetup2,
+        scannerId1: "id0",
+        scannerId2: "id1",
+      })
+    ).toEqual({
       indexMapping: [
         [0, 3],
         [1, 8],
@@ -456,13 +475,123 @@ describe("getBestMappingBetweenTwoScanners", () => {
         [19, 15],
         [24, 19],
       ],
-      rotationScanner1: ["-x", "+y", "-z"],
-      translation: [68, 1246, -43],
+      rotationScanner2: ["-x", "+y", "-z"],
+      translation: [-68, 1246, 43],
+    });
+
+    expect(
+      getBestMappingBetweenTwoScanners({
+        setup: testSetup2,
+        scannerId1: "id1",
+        scannerId2: "id4",
+      })
+    ).toEqual({
+      indexMapping: [
+        [2, 4],
+        [6, 11],
+        [8, 24],
+        [13, 1],
+        [15, 18],
+        [16, 15],
+        [18, 17],
+        [19, 5],
+        [21, 13],
+        [22, 12],
+        [23, 16],
+        [24, 3],
+      ],
+      rotationScanner2: ["+y", "-z", "-x"],
+      translation: [-88, -113, 1104],
     });
   });
 });
 
-describe("getAllBestMappingsBetweenAnyTwoScanners", () => {
+describe("getScannerBeaconsRelativeToInitialScanner", () => {
+  const { getScannerBeaconsRelativeToInitialScanner } = Import;
+  it("works as expected", () => {
+    const scannerMappings = [
+      {
+        scannerId1: "id0",
+        scannerId2: "id1",
+        rotationScanner2: ["-x", "+y", "-z"],
+        translation: [-68, 1246, 43],
+      },
+      {
+        scannerId1: "id1",
+        scannerId2: "id4",
+        rotationScanner2: ["+y", "-z", "-x"],
+        translation: [-88, -113, 1104],
+      },
+    ];
+
+    expect(
+      getScannerBeaconsRelativeToInitialScanner({ setup: testSetup2, scannerId2: "id1", scannerMappings })
+    ).toEqual([
+      [-618, -824, -621],
+      [-537, -823, -458],
+      [-447, -329, 318],
+      [404, -588, -901],
+      [-27, -1108, -65],
+      [544, -627, -890],
+      [408, -1815, 803],
+      [-499, -1607, -770],
+      [528, -643, 409],
+      [-601, -1648, -643],
+      [-661, -816, -575],
+      [568, -2007, -577],
+      [390, -675, -793],
+      [534, -1912, 768],
+      [497, -1838, -617],
+      [423, -701, 434],
+      [-635, -1737, 486],
+      [396, -1931, -563],
+      [-345, -311, 381],
+      [459, -707, 401],
+      [-518, -1681, -600],
+      [432, -2009, 850],
+      [-739, -1745, 668],
+      [-687, -1600, 576],
+      [-485, -357, 347],
+    ]);
+
+    expect(
+      getScannerBeaconsRelativeToInitialScanner({ setup: testSetup2, scannerId2: "id4", scannerMappings })
+    ).toEqual([
+      [-612, -1695, 1788],
+      [534, -1912, 768],
+      [-631, -672, 1502],
+      [-485, -357, 347],
+      [-447, -329, 318],
+      [459, -707, 401],
+      [612, -1593, 1893],
+      [465, -695, 1988],
+      [-413, -627, 1469],
+      [-456, -621, 1527],
+      [-36, -1284, 1171],
+      [408, -1815, 803],
+      [-739, -1745, 668],
+      [432, -2009, 850],
+      [456, -540, 1869],
+      [-635, -1737, 486],
+      [-687, -1600, 576],
+      [-345, -311, 381],
+      [423, -701, 434],
+      [527, -524, 1933],
+      [-532, -1715, 1894],
+      [-624, -1620, 1868],
+      [496, -1584, 1900],
+      [605, -1665, 1952],
+      [528, -643, 409],
+      [26, -1119, 1091],
+    ]);
+
+    expect(
+getScannerBeaconsRelativeToInitialScanner({ setup: testSetup2, scannerId2: "id2", scannerMappings })).
+toMatchInlineSnapshot(`undefined`);
+  });
+});
+
+describe.skip("getAllBestMappingsBetweenAnyTwoScanners", () => {
   const { getAllBestMappingsBetweenAnyTwoScanners } = Import;
   it("works as expected", () => {
     expect(getAllBestMappingsBetweenAnyTwoScanners(testSetup2)).toEqual([
@@ -481,10 +610,10 @@ describe("getAllBestMappingsBetweenAnyTwoScanners", () => {
           [19, 15],
           [24, 19],
         ],
-        rotationScanner1: ["-x", "+y", "-z"],
+        rotationScanner2: ["-x", "+y", "-z"],
         scannerId1: "id0",
         scannerId2: "id1",
-        translation: [68, 1246, -43],
+        translation: [-68, 1246, 43],
       },
       {
         indexMapping: [
@@ -501,7 +630,7 @@ describe("getAllBestMappingsBetweenAnyTwoScanners", () => {
           [22, 21],
           [23, 24],
         ],
-        rotationScanner1: ["+x", "+y", "+z"],
+        rotationScanner2: ["+x", "+y", "+z"],
         scannerId1: "id1",
         scannerId2: "id3",
         translation: [-160, 1134, 23],
@@ -521,10 +650,10 @@ describe("getAllBestMappingsBetweenAnyTwoScanners", () => {
           [23, 16],
           [24, 3],
         ],
-        rotationScanner1: ["-z", "+x", "-y"],
+        rotationScanner2: ["+y", "-z", "-x"],
         scannerId1: "id1",
         scannerId2: "id4",
-        translation: [-1104, -88, 113],
+        translation: [-88, -113, 1104],
       },
       {
         indexMapping: [
@@ -541,102 +670,103 @@ describe("getAllBestMappingsBetweenAnyTwoScanners", () => {
           [23, 13],
           [25, 24],
         ],
-        rotationScanner1: ["+y", "+x", "-z"],
+        rotationScanner2: ["+y", "+x", "-z"],
         scannerId1: "id2",
         scannerId2: "id4",
-        translation: [168, -1125, 72],
+        translation: [-1125, 168, -72],
       },
     ]);
   });
 });
 
-describe("extractUniqueBeaconsFromAllBestMappings", () => {
+describe.skip("extractUniqueBeaconsFromAllBestMappings", () => {
   const { extractUniqueBeaconsFromAllBestMappings } = Import;
   it("works as expected", () => {
     const allBestMappings = Import.getAllBestMappingsBetweenAnyTwoScanners(testSetup2);
     const result = extractUniqueBeaconsFromAllBestMappings(testSetup2, allBestMappings);
     expect(result.length).toBe(79);
-    expect(result).toEqual([
-      ["id0-0", "id1-3"],
-      ["id0-1", "id1-8", "id4-24", "id2-25"],
-      ["id0-2"],
-      ["id0-3", "id1-12"],
-      ["id0-4", "id1-1"],
-      ["id0-5", "id1-24", "id4-3"],
-      ["id0-6", "id1-18", "id4-17"],
-      ["id0-7", "id1-10"],
-      ["id0-8"],
-      ["id0-9", "id1-0"],
-      ["id0-10"],
-      ["id0-11"],
-      ["id0-12", "id1-2", "id4-4"],
-      ["id0-13"],
-      ["id0-14", "id1-5"],
-      ["id0-15"],
-      ["id0-16"],
-      ["id0-17"],
-      ["id0-18"],
-      ["id0-19", "id1-15", "id4-18", "id2-1"],
-      ["id0-20"],
-      ["id0-21"],
-      ["id0-22"],
-      ["id0-23"],
-      ["id0-24", "id1-19", "id4-5", "id2-19"],
-      ["id1-4"],
-      ["id1-6", "id3-2", "id4-11", "id2-11"],
-      ["id1-7", "id3-13"],
-      ["id1-9", "id3-20"],
-      ["id1-11", "id3-3"],
-      ["id1-13", "id3-6", "id4-1", "id2-16"],
-      ["id1-14", "id3-0"],
-      ["id1-16", "id3-11", "id4-15"],
-      ["id1-17", "id3-5"],
-      ["id1-20", "id3-17"],
-      ["id1-21", "id3-12", "id4-13", "id2-23"],
-      ["id1-22", "id3-21", "id4-12"],
-      ["id1-23", "id3-24", "id4-16"],
-      ["id2-0", "id4-14"],
-      ["id2-2"],
-      ["id2-3"],
-      ["id2-4"],
-      ["id2-5"],
-      ["id2-6"],
-      ["id2-7", "id4-23"],
-      ["id2-8", "id4-22"],
-      ["id2-9"],
-      ["id2-10"],
-      ["id2-12", "id4-19"],
-      ["id2-13", "id4-6"],
-      ["id2-14"],
-      ["id2-15"],
-      ["id2-17"],
-      ["id2-18"],
-      ["id2-20", "id4-7"],
-      ["id2-21"],
-      ["id2-22"],
-      ["id2-24"],
-      ["id3-1"],
-      ["id3-4"],
-      ["id3-7"],
-      ["id3-8"],
-      ["id3-9"],
-      ["id3-10"],
-      ["id3-14"],
-      ["id3-15"],
-      ["id3-16"],
-      ["id3-18"],
-      ["id3-19"],
-      ["id3-22"],
-      ["id3-23"],
-      ["id4-0"],
-      ["id4-2"],
-      ["id4-8"],
-      ["id4-9"],
-      ["id4-10"],
-      ["id4-20"],
-      ["id4-21"],
-      ["id4-25"],
-    ]);
+    expect(result).toMatchInlineSnapshot();
+    // expect(result).toEqual([
+    //   ["id0-0", "id1-3"],
+    //   ["id0-1", "id1-8", "id4-24", "id2-25"],
+    //   ["id0-2"],
+    //   ["id0-3", "id1-12"],
+    //   ["id0-4", "id1-1"],
+    //   ["id0-5", "id1-24", "id4-3"],
+    //   ["id0-6", "id1-18", "id4-17"],
+    //   ["id0-7", "id1-10"],
+    //   ["id0-8"],
+    //   ["id0-9", "id1-0"],
+    //   ["id0-10"],
+    //   ["id0-11"],
+    //   ["id0-12", "id1-2", "id4-4"],
+    //   ["id0-13"],
+    //   ["id0-14", "id1-5"],
+    //   ["id0-15"],
+    //   ["id0-16"],
+    //   ["id0-17"],
+    //   ["id0-18"],
+    //   ["id0-19", "id1-15", "id4-18", "id2-1"],
+    //   ["id0-20"],
+    //   ["id0-21"],
+    //   ["id0-22"],
+    //   ["id0-23"],
+    //   ["id0-24", "id1-19", "id4-5", "id2-19"],
+    //   ["id1-4"],
+    //   ["id1-6", "id3-2", "id4-11", "id2-11"],
+    //   ["id1-7", "id3-13"],
+    //   ["id1-9", "id3-20"],
+    //   ["id1-11", "id3-3"],
+    //   ["id1-13", "id3-6", "id4-1", "id2-16"],
+    //   ["id1-14", "id3-0"],
+    //   ["id1-16", "id3-11", "id4-15"],
+    //   ["id1-17", "id3-5"],
+    //   ["id1-20", "id3-17"],
+    //   ["id1-21", "id3-12", "id4-13", "id2-23"],
+    //   ["id1-22", "id3-21", "id4-12"],
+    //   ["id1-23", "id3-24", "id4-16"],
+    //   ["id2-0", "id4-14"],
+    //   ["id2-2"],
+    //   ["id2-3"],
+    //   ["id2-4"],
+    //   ["id2-5"],
+    //   ["id2-6"],
+    //   ["id2-7", "id4-23"],
+    //   ["id2-8", "id4-22"],
+    //   ["id2-9"],
+    //   ["id2-10"],
+    //   ["id2-12", "id4-19"],
+    //   ["id2-13", "id4-6"],
+    //   ["id2-14"],
+    //   ["id2-15"],
+    //   ["id2-17"],
+    //   ["id2-18"],
+    //   ["id2-20", "id4-7"],
+    //   ["id2-21"],
+    //   ["id2-22"],
+    //   ["id2-24"],
+    //   ["id3-1"],
+    //   ["id3-4"],
+    //   ["id3-7"],
+    //   ["id3-8"],
+    //   ["id3-9"],
+    //   ["id3-10"],
+    //   ["id3-14"],
+    //   ["id3-15"],
+    //   ["id3-16"],
+    //   ["id3-18"],
+    //   ["id3-19"],
+    //   ["id3-22"],
+    //   ["id3-23"],
+    //   ["id4-0"],
+    //   ["id4-2"],
+    //   ["id4-8"],
+    //   ["id4-9"],
+    //   ["id4-10"],
+    //   ["id4-20"],
+    //   ["id4-21"],
+    //   ["id4-25"],
+    // ]);
   });
 });
 

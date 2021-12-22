@@ -32,6 +32,7 @@ function getSolutionPart2() {
 function parseLinesIntoSetup(lines) {
   const setup = {
     beaconsByScannerId: {},
+    initialScannerId: null,
   };
 
   let currScannerId = null;
@@ -39,6 +40,9 @@ function parseLinesIntoSetup(lines) {
     const match1 = /--- scanner (\d+) ---/.exec(text);
     if (match1) {
       currScannerId = `id${match1[1]}`;
+      if (setup.initialScannerId == null) {
+        setup.initialScannerId = currScannerId;
+      }
       setup.beaconsByScannerId[currScannerId] = [];
       return;
     }
@@ -88,45 +92,41 @@ function listPossibleScannerRotations() {
 function applyRotationToBeacon(beacon, rotation) {
   const MAP_LETTER_TO_ORIG_INDEX = { x: 0, y: 1, z: 2 };
   return [null, null, null].map((_, index) => {
-    return rotation[index][0] === "+"
-      ? beacon[MAP_LETTER_TO_ORIG_INDEX[rotation[index][1]]]
-      : -beacon[MAP_LETTER_TO_ORIG_INDEX[rotation[index][1]]];
+    const origIndex = MAP_LETTER_TO_ORIG_INDEX[rotation[index][1]];
+    return rotation[index][0] === "+" ? beacon[origIndex] : -beacon[origIndex];
   });
+}
+
+function applyNegativeRotationToBeacon(beacon, rotation) {
+  const MAP_LETTER_TO_ORIG_INDEX = { x: 0, y: 1, z: 2 };
+  const result = [null, null, null];
+
+  for (let i = 0; i < 3; i++) {
+    const origIndex = MAP_LETTER_TO_ORIG_INDEX[rotation[i][1]];
+    result[origIndex] = rotation[i][0] === "+" ? beacon[i] : -beacon[i];
+  }
+
+  return result;
 }
 
 function applyTranslationToBeacon(beacon, translation) {
   return beacon.map((pos, index) => pos + translation[index]);
 }
 
+function applyNegativeTranslationToBeacon(beacon, translation) {
+  return beacon.map((pos, index) => pos - translation[index]);
+}
+
 function getTranslationFromOneBeaconToAnother(beacon1, beacon2) {
-  const diffX = beacon2[0] - beacon1[0];
-  const diffY = beacon2[1] - beacon1[1];
-  const diffZ = beacon2[2] - beacon1[2];
-  return [diffX, diffY, diffZ];
+  return [beacon2[0] - beacon1[0], beacon2[1] - beacon1[1], beacon2[2] - beacon1[2]];
 }
 
-function checkIfTranslationResultsInOtherBeacon({ beacon1, translation, beacon2 }) {
-  const resultingBeacon = applyTranslationToBeacon(beacon1, translation);
-  return resultingBeacon.every((value, index) => value === beacon2[index]);
-}
-
-function getBeaconIndexMatchesWithGivenMappingBetweenTwoScanners({
-  setup,
-  scannerId1,
-  scannerId2,
-  rotationScanner1,
-  translation,
-}) {
+function matchTwoBeaconSetsWithGivenTranslation({ allBeaconsSet1, allBeaconsSet2, translation }) {
   const indexMatches = [];
-  for (let index1 = 0; index1 < setup.beaconsByScannerId[scannerId1].length; index1++) {
-    const beacon1 = setup.beaconsByScannerId[scannerId1][index1];
-    const rotated = applyRotationToBeacon(beacon1, rotationScanner1);
-    const rotatedAndTranslated = applyTranslationToBeacon(rotated, translation);
-    const _checkIfIsMatch = beacon2 =>
-      beacon2[0] === rotatedAndTranslated[0] &&
-      beacon2[1] === rotatedAndTranslated[1] &&
-      beacon2[2] === rotatedAndTranslated[2];
-    const matchingIndex = setup.beaconsByScannerId[scannerId2].findIndex(_checkIfIsMatch);
+  for (let index1 = 0; index1 < allBeaconsSet1.length; index1++) {
+    const translatedBeacon1 = applyTranslationToBeacon(allBeaconsSet1[index1], translation);
+    const _checkIfIsMatch = beacon2 => beacon2.every((value, index) => translatedBeacon1[index] === value);
+    const matchingIndex = allBeaconsSet2.findIndex(_checkIfIsMatch);
     if (matchingIndex >= 0) {
       indexMatches.push([index1, matchingIndex]);
     }
@@ -138,45 +138,91 @@ function getBestMappingBetweenTwoScanners({ setup, scannerId1, scannerId2 }) {
   const size1 = setup.beaconsByScannerId[scannerId1].length;
   const size2 = setup.beaconsByScannerId[scannerId2].length;
 
+  const allBeaconsSet1 = setup.beaconsByScannerId[scannerId1];
+  const allBeaconsSet2 = setup.beaconsByScannerId[scannerId2];
+
   let bestMapping = null;
-  const allRotations = listPossibleScannerRotations();
-  allRotations.forEach(rotationScanner1 => {
+
+  listPossibleScannerRotations().forEach(rotationScanner2 => {
+    const allRotatedBeacons2 = allBeaconsSet2.map(item => applyRotationToBeacon(item, rotationScanner2));
+
     for (let index1 = 0; index1 < size1; index1++) {
-      if (bestMapping != null && index1 + bestMapping.indexMapping.length >= size1) {
+      if (bestMapping != null && index1 + bestMapping.indexMapping.length >= Math.min(size1, size2)) {
         break;
       }
-      const rotated = applyRotationToBeacon(setup.beaconsByScannerId[scannerId1][index1], rotationScanner1);
+      const beacon1 = setup.beaconsByScannerId[scannerId1][index1];
       for (let index2 = 0; index2 < size2; index2++) {
         if (bestMapping != null && bestMapping.indexMapping.length >= 12) {
           return bestMapping;
         }
-        if (bestMapping != null && index2 + bestMapping.indexMapping.length >= size2) {
-          break;
-        }
-        const translation = getTranslationFromOneBeaconToAnother(rotated, setup.beaconsByScannerId[scannerId2][index2]);
-        const mapping = getBeaconIndexMatchesWithGivenMappingBetweenTwoScanners({
-          setup,
-          scannerId1,
-          scannerId2,
-          rotationScanner1,
+
+        // const translation = getTranslationFromOneBeaconToAnother(beacon1, allRotatedBeacons2[index2]);
+        const translation = getTranslationFromOneBeaconToAnother(beacon1, allRotatedBeacons2[index2]);
+
+        const indexMapping = matchTwoBeaconSetsWithGivenTranslation({
+          allBeaconsSet1,
+          allBeaconsSet2: allRotatedBeacons2,
           translation,
         });
-        if (bestMapping == null || mapping.length > bestMapping.indexMapping.length) {
-          bestMapping = { indexMapping: mapping, rotationScanner1, translation };
-          // } else if (
-          //   mapping.length === bestMapping.indexMapping.length &&
-          //   (bestMapping.rotationScanner1.join("-") !== rotationScanner1.join("-") ||
-          //     bestMapping.translation.join("-") !== translation.join("-"))
-          // ) {
-          //   bestMapping.alternatives = [
-          //     ...(bestMapping.alternatives || []),
-          //     { indexMapping: mapping, rotationScanner1, translation },
-          //   ];
+        if (bestMapping == null || indexMapping.length > bestMapping.indexMapping.length) {
+          bestMapping = { indexMapping, rotationScanner2, translation };
         }
       }
     }
   });
+
   return bestMapping;
+}
+
+function getScannerBeaconsRelativeToInitialScanner({ setup, scannerId2, scannerMappings }) {
+  const { initialScannerId } = setup;
+
+  if (scannerId2 === initialScannerId) {
+    return setup.beaconsByScannerId[initialScannerId];
+  }
+
+  const mappingSteps = [];
+  const _traverse = currPath => {
+    if (mappingSteps.length === 0) {
+      const lastStep = currPath[currPath.length - 1];
+      if (lastStep === scannerId2) {
+        mappingSteps.push(...currPath);
+        return;
+      }
+      scannerMappings
+        .filter(
+          item =>
+            (item.scannerId1 === lastStep && !currPath.includes(item.scannerId2)) ||
+            (item.scannerId2 === lastStep && !currPath.includes(item.scannerId1))
+        )
+        .forEach(item => _traverse([...currPath, item.scannerId2]));
+    }
+  };
+  _traverse([initialScannerId]);
+
+  if (Array.isArray(mappingSteps) && mappingSteps.length > 1) {
+    let beacons = setup.beaconsByScannerId[scannerId2];
+    for (let i = mappingSteps.length - 1; i > 0; i--) {
+      const mappingItem = scannerMappings.find(
+        item => item.scannerId1 === mappingSteps[i - 1] && item.scannerId2 === mappingSteps[i]
+      );
+      if (mappingItem) {
+        beacons = beacons.map(item => {
+          const rotated = applyRotationToBeacon(item, mappingItem.rotationScanner2);
+          return applyNegativeTranslationToBeacon(rotated, mappingItem.translation);
+        });
+      } else {
+        const reverseMappingItem = scannerMappings.find(
+          item => item.scannerId1 === mappingSteps[i] && item.scannerId2 === mappingSteps[i - 1]
+        );
+        beacons = beacons.map(item => {
+          const translated = applyTranslationToBeacon(item, mappingItem.translation);
+          return applyNegativeRotationToBeacon(translated, mappingItem.rotationScanner2);
+        });
+      }
+    }
+    return beacons;
+  }
 }
 
 function getAllBestMappingsBetweenAnyTwoScanners(setup) {
@@ -200,6 +246,29 @@ function getAllBestMappingsBetweenAnyTwoScanners(setup) {
 }
 
 function extractUniqueBeaconsFromAllBestMappings(setup, allBestMappings) {
+  const allBeaconsRelativeToInitialScanner = [];
+
+  Object.keys(setup.beaconsByScannerId).forEach(scannerId2 => {
+    console.log({ scannerId2, allBestMappings });
+
+    const relativeBeacons = getScannerBeaconsRelativeToInitialScanner({
+      setup,
+      scannerId2,
+      scannerMappings: allBestMappings,
+    });
+    relativeBeacons.forEach(beacon => {
+      if (
+        allBeaconsRelativeToInitialScanner.every(
+          beacon2 => beacon[0] !== beacon2[0] || beacon[1] !== beacon2[1] || beacon[2] !== beacon2[2]
+        )
+      ) {
+        allBeaconsRelativeToInitialScanner.push(beacon);
+      }
+    });
+  });
+
+  return allBeaconsRelativeToInitialScanner;
+
   const beaconsWithScannerIdsAndIndexes = [];
 
   Object.keys(setup.beaconsByScannerId).forEach(scannerId => {
@@ -268,10 +337,13 @@ module.exports = {
   parseLinesIntoSetup,
   listPossibleScannerRotations,
   applyRotationToBeacon,
+  applyNegativeRotationToBeacon,
   getTranslationFromOneBeaconToAnother,
   applyTranslationToBeacon,
-  getBeaconIndexMatchesWithGivenMappingBetweenTwoScanners,
+  matchTwoBeaconSetsWithGivenTranslation,
   getBestMappingBetweenTwoScanners,
+  getScannerBeaconsRelativeToInitialScanner,
+
   getAllBestMappingsBetweenAnyTwoScanners,
   extractUniqueBeaconsFromAllBestMappings,
 };
