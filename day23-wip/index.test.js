@@ -12,6 +12,17 @@ const testData1 = [
   "  #########",
 ];
 
+const testData2 = [
+  //
+  "#############",
+  "#...........#",
+  "###B#C#B#D###",
+  "  #D#C#B#A#",
+  "  #D#B#A#C#",
+  "  #A#D#C#A#",
+  "  #########",
+];
+
 const testSetup1 = {
   initialPositions: {
     A1: Positions.ROOM_1_WINDOW,
@@ -160,76 +171,39 @@ describe("checkIfRoomWithPositionIsEmpty", () => {
   });
 });
 
-describe("listPossibleNextSteps", () => {
-  const { listPossibleNextSteps } = Import;
+describe("listPossibleNextMoves", () => {
+  const { listPossibleNextMoves } = Import;
   it("works as expected", () => {
-    const result1 = listPossibleNextSteps({
-      currentPositions: testSetup1.initialPositions,
-      lastStep: {},
-    });
-    const resultWithKeys1 = result1.map(item => ({
-      ...item,
-      from: _getPositionKey(item.from),
-      to: _getPositionKey(item.to),
-    }));
-
-    expect(resultWithKeys1).toEqual([
-      {
-        id: "B1",
-        from: "Positions.ROOM_1_DOOR",
-        to: "Positions.HALLWAY_LEFT_SIDE",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "B1",
-        from: "Positions.ROOM_1_DOOR",
-        to: "Positions.HALLWAY_ROOMS_1_2",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "B2",
-        from: "Positions.ROOM_3_DOOR",
-        to: "Positions.HALLWAY_ROOMS_2_3",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "B2",
-        from: "Positions.ROOM_3_DOOR",
-        to: "Positions.HALLWAY_ROOMS_3_4",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "C1",
-        from: "Positions.ROOM_2_DOOR",
-        to: "Positions.HALLWAY_ROOMS_1_2",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "C1",
-        from: "Positions.ROOM_2_DOOR",
-        to: "Positions.HALLWAY_ROOMS_2_3",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "D1",
-        from: "Positions.ROOM_4_DOOR",
-        to: "Positions.HALLWAY_ROOMS_3_4",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "D1",
-        from: "Positions.ROOM_4_DOOR",
-        to: "Positions.HALLWAY_RIGHT_SIDE",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
+    const result1 = listPossibleNextMoves({ currentPositions: testSetup1.initialPositions });
+    expect(result1).toEqual([
+      { hasPriority: false, id: "B1", positionFrom: "room-1-door", positionTo: "hall-1" },
+      { hasPriority: false, id: "B1", positionFrom: "room-1-door", positionTo: "hall-2" },
+      { hasPriority: false, id: "B1", positionFrom: "room-1-door", positionTo: "hall-3" },
+      { hasPriority: false, id: "B1", positionFrom: "room-1-door", positionTo: "hall-4" },
+      { hasPriority: false, id: "B1", positionFrom: "room-1-door", positionTo: "hall-5" },
+      { hasPriority: false, id: "B1", positionFrom: "room-1-door", positionTo: "hall-6" },
+      { hasPriority: false, id: "B1", positionFrom: "room-1-door", positionTo: "hall-7" },
+      { hasPriority: false, id: "B2", positionFrom: "room-3-door", positionTo: "hall-1" },
+      { hasPriority: false, id: "B2", positionFrom: "room-3-door", positionTo: "hall-2" },
+      { hasPriority: false, id: "B2", positionFrom: "room-3-door", positionTo: "hall-3" },
+      { hasPriority: false, id: "B2", positionFrom: "room-3-door", positionTo: "hall-4" },
+      { hasPriority: false, id: "B2", positionFrom: "room-3-door", positionTo: "hall-5" },
+      { hasPriority: false, id: "B2", positionFrom: "room-3-door", positionTo: "hall-6" },
+      { hasPriority: false, id: "B2", positionFrom: "room-3-door", positionTo: "hall-7" },
+      { hasPriority: false, id: "C1", positionFrom: "room-2-door", positionTo: "hall-1" },
+      { hasPriority: false, id: "C1", positionFrom: "room-2-door", positionTo: "hall-2" },
+      { hasPriority: false, id: "C1", positionFrom: "room-2-door", positionTo: "hall-3" },
+      { hasPriority: false, id: "C1", positionFrom: "room-2-door", positionTo: "hall-4" },
+      { hasPriority: false, id: "C1", positionFrom: "room-2-door", positionTo: "hall-5" },
+      { hasPriority: false, id: "C1", positionFrom: "room-2-door", positionTo: "hall-6" },
+      { hasPriority: false, id: "C1", positionFrom: "room-2-door", positionTo: "hall-7" },
+      { hasPriority: false, id: "D1", positionFrom: "room-4-door", positionTo: "hall-1" },
+      { hasPriority: false, id: "D1", positionFrom: "room-4-door", positionTo: "hall-2" },
+      { hasPriority: false, id: "D1", positionFrom: "room-4-door", positionTo: "hall-3" },
+      { hasPriority: false, id: "D1", positionFrom: "room-4-door", positionTo: "hall-4" },
+      { hasPriority: false, id: "D1", positionFrom: "room-4-door", positionTo: "hall-5" },
+      { hasPriority: false, id: "D1", positionFrom: "room-4-door", positionTo: "hall-6" },
+      { hasPriority: false, id: "D1", positionFrom: "room-4-door", positionTo: "hall-7" },
     ]);
 
     const currentPositions2 = {
@@ -242,12 +216,6 @@ describe("listPossibleNextSteps", () => {
       D1: Positions.ROOM_4_DOOR,
       D2: Positions.ROOM_2_WINDOW,
     };
-    const lastStep2 = {
-      id: "B2",
-      from: Positions.HALLWAY_ROOMS_3_4,
-      to: Positions.HALLWAY_RIGHT_SIDE,
-      hasToKeepMoving: false,
-    };
     expect(Import.createPositionsOutput(currentPositions2)).toEqual([
       "#############",
       "#c....C...b.#",
@@ -255,77 +223,14 @@ describe("listPossibleNextSteps", () => {
       "  #A#d#.#a#",
       "  #########",
     ]);
-    const result2 = listPossibleNextSteps({ currentPositions: currentPositions2, lastStep: lastStep2 });
-    const resultWithKeys2 = result2.map(item => ({
-      ...item,
-      from: _getPositionKey(item.from),
-      to: _getPositionKey(item.to),
-    }));
-
-    expect(resultWithKeys2).toEqual([
-      {
-        id: "B1",
-        from: "Positions.ROOM_1_DOOR",
-        to: "Positions.HALLWAY_LEFT_SIDE",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "B1",
-        from: "Positions.ROOM_1_DOOR",
-        to: "Positions.HALLWAY_ROOMS_1_2",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "B2",
-        from: "Positions.HALLWAY_RIGHT_SIDE",
-        to: "Positions.HALLWAY_RIGHT_END",
-        distance: 1,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "C1",
-        from: "Positions.HALLWAY_ROOMS_2_3",
-        to: "Positions.HALLWAY_ROOMS_1_2",
-        distance: 2,
-        hasToKeepMoving: true,
-      },
-      {
-        id: "C1",
-        from: "Positions.HALLWAY_ROOMS_2_3",
-        to: "Positions.HALLWAY_ROOMS_3_4",
-        distance: 2,
-        hasToKeepMoving: true,
-      },
-      {
-        id: "C1",
-        from: "Positions.HALLWAY_ROOMS_2_3",
-        to: "Positions.ROOM_3_DOOR",
-        distance: 2,
-        hasToKeepMoving: true,
-      },
-      {
-        id: "C2",
-        from: "Positions.HALLWAY_LEFT_END",
-        to: "Positions.HALLWAY_LEFT_SIDE",
-        distance: 1,
-        hasToKeepMoving: true,
-      },
-      {
-        id: "D1",
-        from: "Positions.ROOM_4_DOOR",
-        to: "Positions.HALLWAY_ROOMS_3_4",
-        distance: 2,
-        hasToKeepMoving: false,
-      },
-      {
-        id: "D2",
-        from: "Positions.ROOM_2_WINDOW",
-        to: "Positions.ROOM_2_DOOR",
-        distance: 1,
-        hasToKeepMoving: true,
-      },
+    const result2 = listPossibleNextMoves({ currentPositions: currentPositions2 });
+    expect(result2).toEqual([
+      { hasPriority: false, id: "B1", positionFrom: "room-1-door", positionTo: "hall-2" },
+      { hasPriority: false, id: "B1", positionFrom: "room-1-door", positionTo: "hall-3" },
+      { hasPriority: true, id: "C1", positionFrom: "hall-4", positionTo: "room-3-door" },
+      { hasPriority: false, id: "D1", positionFrom: "room-4-door", positionTo: "hall-5" },
+      { hasPriority: false, id: "D2", positionFrom: "room-2-window", positionTo: "hall-2" },
+      { hasPriority: false, id: "D2", positionFrom: "room-2-window", positionTo: "hall-3" },
     ]);
 
     const currentPositions3 = {
@@ -338,7 +243,6 @@ describe("listPossibleNextSteps", () => {
       D1: Positions.ROOM_4_DOOR,
       D2: Positions.ROOM_4_WINDOW,
     };
-    const lastStep3 = {};
     expect(Import.createPositionsOutput(currentPositions3)).toEqual([
       "#############",
       "#.........B.#",
@@ -346,30 +250,15 @@ describe("listPossibleNextSteps", () => {
       "  #a#b#C#d#",
       "  #########",
     ]);
-    const result3 = listPossibleNextSteps({ currentPositions: currentPositions3, lastStep: lastStep3 });
-    const resultWithKeys3 = result3.map(item => ({
-      ...item,
-      from: _getPositionKey(item.from),
-      to: _getPositionKey(item.to),
-    }));
-    expect(resultWithKeys3).toMatchInlineSnapshot(`
-Array [
-  Object {
-    "distance": 1,
-    "from": "Positions.HALLWAY_RIGHT_SIDE",
-    "hasToKeepMoving": true,
-    "id": "B1",
-    "to": "Positions.HALLWAY_RIGHT_END",
-  },
-  Object {
-    "distance": 2,
-    "from": "Positions.HALLWAY_RIGHT_SIDE",
-    "hasToKeepMoving": true,
-    "id": "B1",
-    "to": "Positions.HALLWAY_ROOMS_3_4",
-  },
-]
-`);
+    const result3 = listPossibleNextMoves({ currentPositions: currentPositions3 });
+    expect(result3).toEqual([
+      {
+        hasPriority: true,
+        id: "B1",
+        positionFrom: "hall-6",
+        positionTo: "room-2-door",
+      },
+    ]);
   });
 });
 
@@ -399,7 +288,8 @@ describe("getSolutionPart1", () => {
   const { getSolutionPart1 } = Import;
   it("- when used with real data - works as expected", () => {
     const result = getSolutionPart1();
-    expect(result).toBe(612714);
+    expect(result).not.toBe(19703);
+    expect(result).toBe(15358);
   });
 });
 

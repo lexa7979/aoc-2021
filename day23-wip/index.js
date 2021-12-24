@@ -7,14 +7,14 @@ const {
   Positions,
   HallPositions,
   DoorPositions,
-  WindowPositions,
+  // WindowPositions,
   TargetPositionsById,
   MapSinglePositionsToRoomPositions,
   MovementDirections,
   MapIdToTargetRoom,
-  PossibleSteps,
   EnergyConsumptionById,
   AnyPathBetweenTwoPositions,
+  TargetPositionsByIdAndType,
 } = require("./constants");
 
 Helpers.setParseOptions({
@@ -134,149 +134,116 @@ function checkIfRoomWithPositionIsEmpty({ currentPositions, position }) {
   return roomPositions.every(pos => Ids.every(id => currentPositions[id] !== pos));
 }
 
-function listSpecialMoves({ currentPositions }) {}
+function listPossibleNextMoves({ currentPositions }) {
+  const _checkIfMoveIsPossible = move => {
+    const path = AnyPathBetweenTwoPositions[move.positionFrom][move.positionTo];
+    return Ids.every(id => id === move.id || !path.includes(currentPositions[id]));
+  };
 
-function listPossibleNextSteps({ currentPositions, lastStep }) {
-  const occupiedPositions = Object.values(currentPositions);
+  const _checkIfPositionIsEmptyOrHasTargetId = pos => {
+    const id = Ids.find(item => currentPositions[item] === pos);
+    return id == null || TargetPositionsById[id].includes(pos);
+  };
 
   const results = [];
 
-  Ids.forEach(id => {
-    const from = currentPositions[id];
-    const isMovingFurther = id === lastStep.id;
+  for (let i = 0; i < Ids.length; i++) {
+    const id = Ids[i];
+    const positionFrom = currentPositions[id];
+    const targets = TargetPositionsById[id];
 
-    if (!isMovingFurther && lastStep.hasToKeepMoving) {
-      return;
-    }
-
-    const shouldStayAtWindow = WindowPositions.includes(from) && checkIfPositionIsInTargetRoom({ position: from, id });
-    if (shouldStayAtWindow) {
-      return;
-    }
-
-    PossibleSteps[from].forEach(({ to, distance }) => {
-      const direction = getMovementDirection({ positionFrom: from, positionTo: to });
-
-      const isOccupied = occupiedPositions.includes(to);
-      const isGoingBack = isMovingFurther && lastStep.from === to;
-      if (isOccupied || isGoingBack) {
-        return;
-      }
-
-      let hasToKeepMoving;
-      switch (direction) {
-        case MovementDirections.INSIDE_ROOM:
-          hasToKeepMoving =
-            !checkIfPositionIsInTargetRoom({ position: from, id }) && (!isMovingFurther || lastStep.hasToKeepMoving);
-          break;
-
-        case MovementDirections.OUT_OF_ROOM:
-          const shouldStayInRoom =
-            checkIfPositionIsInTargetRoom({ position: from, id }) &&
-            checkIfRoomWithPositionHasOnlyTargetIds({ currentPositions, position: from });
-          if (shouldStayInRoom) {
-            return;
-          }
-          hasToKeepMoving = false;
-          break;
-
-        case MovementDirections.INSIDE_HALL:
-          hasToKeepMoving = !isMovingFurther || lastStep.hasToKeepMoving;
-          break;
-
-        case MovementDirections.OUT_OF_HALL: {
-          const mayEnterRoom =
-            checkIfPositionIsInTargetRoom({ position: to, id }) &&
-            checkIfRoomWithPositionHasOnlyTargetIds({ currentPositions, position: to });
-          if (!mayEnterRoom) {
-            return;
-          }
-          const shouldKeepMoving = checkIfRoomWithPositionIsEmpty({ currentPositions, position: to });
-          hasToKeepMoving = shouldKeepMoving;
-          break;
+    if (targets.includes(positionFrom) && targets.every(_checkIfPositionIsEmptyOrHasTargetId)) {
+      if (DoorPositions.includes(positionFrom)) {
+        const move = {
+          id,
+          positionFrom,
+          positionTo: TargetPositionsByIdAndType[id].window,
+          hasPriority: true,
+        };
+        if (_checkIfMoveIsPossible(move)) {
+          results.push(move);
         }
       }
+      continue;
+    }
 
-      results.push({ id, from, to, distance, hasToKeepMoving });
+    if (targets.every(_checkIfPositionIsEmptyOrHasTargetId)) {
+      const move = {
+        id,
+        positionFrom,
+        positionTo: TargetPositionsByIdAndType[id].door,
+        hasPriority: true,
+      };
+      if (_checkIfMoveIsPossible(move)) {
+        results.push(move);
+      }
+      continue;
+    }
+
+    if (HallPositions.includes(positionFrom)) {
+      continue;
+    }
+
+    HallPositions.forEach(positionTo => {
+      const move = {
+        id,
+        positionFrom,
+        positionTo,
+        hasPriority: false,
+      };
+
+      if (_checkIfMoveIsPossible(move)) {
+        results.push(move);
+      }
     });
-  });
+  }
 
   return results;
 }
 
 function getMinimalNeededEnergyToOrganizeAmphipods(setup) {
-  let minimumEnergy = 100000; // Number.MAX_VALUE;
+  let minimumEnergy = 10000000;
 
-  let totalTries = 0;
+  // let totalTries = 0;
 
-  const _traverse = ({ currentPositions, lastStep, usedEnergy, availableSteps }) => {
-    //
-    if (totalTries++ > 1000000) {
-      totalTries = 0;
-    }
-    if (totalTries < 5) {
-      console.log([...createPositionsOutput(currentPositions), usedEnergy, minimumEnergy, availableSteps]);
-    }
-    //
+  const _traverse = ({ currentPositions, usedEnergy }) => {
+    // //
+    // if (totalTries++ > 1000000) {
+    //   totalTries = 0;
+    // }
+    // if (totalTries < 5) {
+    //   console.log([...createPositionsOutput(currentPositions), usedEnergy, minimumEnergy]);
+    // }
+    // //
 
-    if (availableSteps < 0) {
-      return;
-    }
     if (usedEnergy >= minimumEnergy) {
       return;
     }
     if (isFinal(currentPositions)) {
       minimumEnergy = usedEnergy;
-      console.log({ minimumEnergy });
+      // console.log({ minimumEnergy });
       return;
     }
-    const possibleSteps = listPossibleNextSteps({ currentPositions, lastStep });
 
-    //
-    // if (possibleSteps.length === 0) {
-    //   return;
-    // }
-    //
+    const possibleMoves = listPossibleNextMoves({ currentPositions });
 
-    const energyByStep = possibleSteps.map(({ distance, id }) => distance * EnergyConsumptionById[id]);
+    const hasPriorityMoves = possibleMoves.some(item => item.hasPriority);
 
-    while (possibleSteps.length > 0) {
-      // const index = Math.floor(Math.random() * possibleSteps.length);
-      const index = energyByStep.indexOf(Math.min(...energyByStep));
-      const step = possibleSteps.splice(index, 1)[0];
-      energyByStep.splice(index, 1);
-      // //
-      // console.log(step);
-      // //
-      _traverse(
-        // JSON.parse(
-        // JSON.stringify(
-        {
-          currentPositions: { ...currentPositions, [step.id]: step.to },
-          lastStep: step,
-          usedEnergy: usedEnergy + step.distance * EnergyConsumptionById[step.id],
-          availableSteps: availableSteps - 1,
-        }
-        // )
-        // )
-      );
+    for (let i = 0; i < possibleMoves.length; i++) {
+      if (!hasPriorityMoves || possibleMoves[i].hasPriority) {
+        const { id, positionFrom, positionTo } = possibleMoves[i];
+        const distance = AnyPathBetweenTwoPositions[positionFrom][positionTo].length - 1;
+        _traverse({
+          currentPositions: { ...currentPositions, [id]: positionTo },
+          usedEnergy: usedEnergy + distance * EnergyConsumptionById[id],
+        });
+      }
     }
-
-    // possibleSteps.forEach(step => {
-    //   _traverse({
-    //     currentPositions: { ...currentPositions, [step.id]: step.to },
-    //     lastStep: step,
-    //     usedEnergy: usedEnergy + step.distance * EnergyConsumptionById[step.id],
-    //     availableSteps: availableSteps - 1,
-    //   });
-    // });
   };
 
   _traverse({
     currentPositions: setup.initialPositions,
-    lastStep: {},
     usedEnergy: 0,
-    availableSteps: 100,
   });
 
   return minimumEnergy;
@@ -313,7 +280,7 @@ module.exports = {
   checkIfPositionIsInTargetRoom,
   checkIfRoomWithPositionHasOnlyTargetIds,
   checkIfRoomWithPositionIsEmpty,
-  listPossibleNextSteps,
+  listPossibleNextMoves,
   getMinimalNeededEnergyToOrganizeAmphipods,
 
   createPositionsOutput,
