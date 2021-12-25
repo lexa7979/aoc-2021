@@ -7,20 +7,25 @@ Helpers.setParseOptions({
   asInteger: false,
 });
 
-if (process.env.NODE_ENV !== "test") {
-  console.log("Javascript");
-  const part = process.env.part || "part1";
-  if (part === "part1") {
-    console.log(getSolutionPart1());
-  } else {
-    console.log(getSolutionPart2());
+main();
+
+async function main() {
+  if (process.env.NODE_ENV !== "test") {
+    console.log("Javascript");
+    const part = process.env.part || "part1";
+
+    await new Promise(resolve => setTimeout(resolve, 37000));
+    console.log("Only simulating real calculations - I worked much by hand");
+
+    if (part === "part1") {
+      console.log(getSolutionPart1());
+    } else {
+      console.log(getSolutionPart2());
+    }
   }
 }
 
 function getSolutionPart1() {
-  const lines = Helpers.parseInputData();
-  const setup = parseLinesIntoSetup(lines);
-
   const highestMonadNumber = [5, 9, 6, 9, 2, 9, 9, 4, 9, 9, 4, 9, 9, 8];
   const result = runMainProgramOnInput(highestMonadNumber);
   if (!result.error) {
@@ -29,9 +34,6 @@ function getSolutionPart1() {
 }
 
 function getSolutionPart2() {
-  const lines = Helpers.parseInputData();
-  const setup = parseLinesIntoSetup(lines);
-
   const lowestMonadNumber = [1, 6, 1, 8, 1, 1, 1, 1, 6, 4, 1, 5, 2, 1];
   const result = runMainProgramOnInput(lowestMonadNumber);
   if (!result.error) {
