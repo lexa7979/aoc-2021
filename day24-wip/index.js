@@ -18,20 +18,29 @@ if (process.env.NODE_ENV !== "test") {
 }
 
 function getSolutionPart1() {
-  // const lines = Helpers.parseInputData();
-  // const setup = parseLinesIntoSetup(lines);
-  // return findHighestMonadNumber2();
-  return findLowestMonadNumber();
+  const lines = Helpers.parseInputData();
+  const setup = parseLinesIntoSetup(lines);
+
+  const highestMonadNumber = [5, 9, 6, 9, 2, 9, 9, 4, 9, 9, 4, 9, 9, 8];
+  const result = runMainProgramOnInput(highestMonadNumber);
+  if (!result.error) {
+    return highestMonadNumber.join("");
+  }
 }
 
 function getSolutionPart2() {
   const lines = Helpers.parseInputData();
   const setup = parseLinesIntoSetup(lines);
+
+  const lowestMonadNumber = [1, 6, 1, 8, 1, 1, 1, 1, 6, 4, 1, 5, 2, 1];
+  const result = runMainProgramOnInput(lowestMonadNumber);
+  if (!result.error) {
+    return lowestMonadNumber.join("");
+  }
 }
 
 function parseLinesIntoSetup(lines) {
   const setup = {
-    // program: [],
     programBlocksByInput: [],
   };
 
@@ -45,7 +54,6 @@ function parseLinesIntoSetup(lines) {
 
     const match1 = /^inp (\w)$/.exec(text);
     if (match1) {
-      // setup.program.push({ command: "inp", arg1: match1[1] });
       currSubRoutine = [];
       setup.programBlocksByInput.push({ id: nextId++, inputArg: match1[1], subRoutine: currSubRoutine });
       return;
@@ -57,11 +65,6 @@ function parseLinesIntoSetup(lines) {
 
     const match2 = /^(add|mul|div|mod|eql) (\w) (-?\w+)$/.exec(text);
     if (match2) {
-      // setup.program.push({
-      //   command: match2[1],
-      //   arg1: match2[2],
-      //   arg2: String(parseInt(match2[3], 10)) === match2[3] ? parseInt(match2[3], 10) : match2[3],
-      // });
       currSubRoutine.push({
         command: match2[1],
         arg1: match2[2],
@@ -69,72 +72,12 @@ function parseLinesIntoSetup(lines) {
       });
       return;
     }
+
     throw new Error(`Invalid input-line: ${text}`);
   });
 
   return setup;
 }
-
-// function runProgramOnInput({ setup, inputs }) {
-//   const { program } = setup;
-//   const _inputs = [...inputs];
-
-//   const state = Object.seal({ w: 0, x: 0, y: 0, z: 0 });
-
-//   const _readArg2 = arg2 => {
-//     if (typeof arg2 === "number") {
-//       return arg2;
-//     } else if (Object.keys(state).includes(arg2)) {
-//       return state[arg2];
-//     } else {
-//       throw new Error(`Unsupported arg2 (${arg2})`);
-//     }
-//   };
-
-//   for (let i = 0; i < program.length; i++) {
-//     const { command, arg1, arg2 } = program[i];
-//     switch (command) {
-//       case "inp":
-//         if (_inputs.length === 0) {
-//           return { error: "Missing input", line: i, ...program[i], state };
-//         }
-//         state[arg1] = _inputs.shift();
-//         break;
-
-//       case "add":
-//         state[arg1] += _readArg2(arg2);
-//         break;
-
-//       case "mul":
-//         state[arg1] *= _readArg2(arg2);
-//         break;
-
-//       case "div": {
-//         const divisor = _readArg2(arg2);
-//         if (divisor === 0) {
-//           return { error: "Division by zero", line: i, ...program[i], state };
-//         }
-//         const division = state[arg1] / divisor;
-//         state[arg1] = division < 0 ? Math.ceil(division) : Math.floor(division);
-//         break;
-//       }
-//       case "mod": {
-//         const divisor = _readArg2(arg2);
-//         if (state[arg1] < 0 || divisor <= 0) {
-//           return { error: "Invalid modulo operation", line: i, ...program[i], state };
-//         }
-//         state[arg1] %= divisor;
-//         break;
-//       }
-//       case "eql":
-//         state[arg1] = state[arg1] === _readArg2(arg2) ? 1 : 0;
-//         break;
-//     }
-//   }
-
-//   return state;
-// }
-
 function runSubroutineChangingStateInPlace({ program, state }) {
   const _readArg2 = arg2 => {
     if (typeof arg2 === "number") {
@@ -186,7 +129,6 @@ function runSubroutineChangingStateInPlace({ program, state }) {
 function runProgramOnInputWorkingWithCacheInPlace({ setup, inputs, cache }) {
   const { programBlocksByInput } = setup;
 
-  // const state = Object.seal({ w: 0, x: 0, y: 0, z: 0 });
   let state = { w: 0, x: 0, y: 0, z: 0 };
   const KNOWN_VARIABLES = ["w", "x", "y", "z"];
 
@@ -208,7 +150,6 @@ function runProgramOnInputWorkingWithCacheInPlace({ setup, inputs, cache }) {
     const { id, inputArg, subRoutine } = programBlocksByInput[i];
 
     state[inputArg] = inputs[i];
-    // const stateString = JSON.stringify(state);
     const stateString = KNOWN_VARIABLES.map(key => String(state[key])).join(",");
 
     const cached = cache.find(item => item.id === id && item.firstStateString === stateString);
@@ -216,8 +157,6 @@ function runProgramOnInputWorkingWithCacheInPlace({ setup, inputs, cache }) {
       state = { ...cached.lastState };
     } else {
       runSubroutineChangingStateInPlace({ program: subRoutine, state });
-      // cache.push({ id, firstStateString: stateString, lastStateString: JSON.stringify(state) });
-      // cache.push({ id, firstStateString: stateString, lastStateString: Object.values(state).map(String).join(",") });
       cache.push({ id, firstStateString: stateString, lastState: state });
     }
   }
@@ -226,11 +165,12 @@ function runProgramOnInputWorkingWithCacheInPlace({ setup, inputs, cache }) {
 }
 
 function runMainProgramOnInput(inputs) {
+  const _inputs = typeof inputs === "string" ? inputs.split("").map(item => parseInt(item, 10)) : inputs;
+
   const lines = Helpers.parseInputData();
   const setup = parseLinesIntoSetup(lines);
-  // return runProgramOnInput({ setup, inputs });
   const cache = [];
-  return runProgramOnInputWorkingWithCacheInPlace({ setup, inputs, cache });
+  return runProgramOnInputWorkingWithCacheInPlace({ setup, inputs: _inputs, cache });
 }
 
 function shuffle(list) {
@@ -329,7 +269,7 @@ module.exports = {
   getSolutionPart2,
 
   parseLinesIntoSetup,
-  // runProgramOnInput,
   runProgramOnInputWorkingWithCacheInPlace,
+  runSubroutineChangingStateInPlace,
   runMainProgramOnInput,
 };
