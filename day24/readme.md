@@ -1,4 +1,6 @@
+# Manual analysis of input
 
+```sh
 inp w
 w = A
 x = 0
@@ -435,3 +437,4 @@ inp w
 # add y 9
 # mul y x
 # add z y
+```
